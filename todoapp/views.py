@@ -1,32 +1,38 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from .models import Task
 from .forms import TaskForm
 
-def task_view(request):
-    obj1 = Task.objects.all()
-    if request.method == 'POST':
+class TaskListView(ListView):
+    model = Task
+    template_name = 'task_view.html'
+    context_object_name = 'obj1'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = TaskForm()
+        return context
+
+    def post(self, request, *args, **kwargs):
         form = TaskForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('task_view')
-    else:
-        form = TaskForm()
-    return render(request, 'task_view.html', {'form': form, 'obj1': obj1})
-
-def delete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    if request.method == 'POST':
-        task.delete()
         return redirect('task_view')
-    return render(request, 'delete_task.html', {'task': task})
 
-def update_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task)
-        if form.is_valid():
-            form.save()
-            return redirect('/')
-    else:
-        form = TaskForm(instance=task)
-    return render(request, 'update_task.html', {'form': form, 'task': task})
+class TaskCreateView(CreateView):
+    model = Task
+    template_name = 'task_form.html'
+    form_class = TaskForm
+    success_url = reverse_lazy('task_view')
+
+class TaskUpdateView(UpdateView):
+    model = Task
+    template_name = 'update_task.html'
+    form_class = TaskForm
+    success_url = reverse_lazy('task_view')
+
+class TaskDeleteView(DeleteView):
+    model = Task
+    template_name = 'delete_task.html'
+    success_url = reverse_lazy('task_view')
